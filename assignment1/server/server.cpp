@@ -40,6 +40,8 @@ const char *CLIENT_FOLDER="../";
 int handleSocket(int fd) {
     ssize_t ret;
     static char buf[BUFSIZE+1];
+    int bufLen,i;
+    char *fstr;
 
 
     // read the request from the browser
@@ -53,11 +55,60 @@ int handleSocket(int fd) {
     if(ret>0 && ret<BUFSIZE) buf[ret]=0;
     else buf[0]=0;
 
-    for(int i=0;i<ret;i++) {
+    for(i=0;i<ret;i++) {
         if(buf[i]=='\r' || buf[i]=='\n') {
             buf[i]=0;
         }
     }
+
+
+    // Process GET request
+    if(strncmp(buf,"GET ",4)!=0 && strncmp(buf,"get ",4)!=0){
+        perror("ERROR: GET\n");
+        exit(3);
+    }
+
+    for(i=4;i<BUFSIZE;i++) {
+        if(buf[i]==' ') {
+            buf[i]=0;
+            break;
+        }
+    }
+
+
+    // read index.html
+    for(int j=0;j<i-1;j++){
+        if(buf[j]=='.' && buf[j+1]=='.') {
+            perror("ERROR: upper directory\n");
+            exit(3);
+        }
+    }
+
+    if(strncmp(&buf[0],"GET /\0",6)==0 || !strncmp(&buf[0],"get /\0",6)==0) {
+        strcpy(buf,"GET /index.html\0");
+    }
+
+
+    // recognize the filetype request by the client and open with the browser
+    bufLen=strlen(buf);
+    fstr=(char *)0;
+
+    for(i=0;extensions[i].ext!=0;i++) {
+        int length=strlen(extensions[i].ext);
+        if(strncmp(&buf[bufLen-length],extensions[i].ext,length)==0) {
+            fstr=extensions[i].filetype;
+            break;
+        }
+    }
+
+    if(fstr==0) {
+        fstr=extensions[i-1].filetype;
+    }
+
+    int filefd=open(&buf[5],O_RDONLY);
+    if(fd==-1) write(fd,"failed to open the file",strlen("failed to open the file"));
+
+    return 0;
 }
 
 int main(int argc,char **argv) {
