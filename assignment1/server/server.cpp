@@ -35,6 +35,31 @@ struct {
 
 const char *CLIENT_FOLDER="../";
 
+
+// handle the connection from client socket
+int handleSocket(int fd) {
+    ssize_t ret;
+    static char buf[BUFSIZE+1];
+
+
+    // read the request from the browser
+    ret=read(fd,buf,(size_t)BUFSIZE);
+
+    if(ret==0 || ret==-1){
+        perror("EROR: read\n");
+        exit(3);
+    }
+
+    if(ret>0 && ret<BUFSIZE) buf[ret]=0;
+    else buf[0]=0;
+
+    for(int i=0;i<ret;i++) {
+        if(buf[i]=='\r' || buf[i]=='\n') {
+            buf[i]=0;
+        }
+    }
+}
+
 int main(int argc,char **argv) {
     int listenfd,ret;
     static struct sockaddr_in serverAddr,clientAaddr;
@@ -106,6 +131,9 @@ int main(int argc,char **argv) {
                         exit(EXIT_FAILURE);
                     }
                     FD_SET(newfd,&activefdSet);
+                }
+                else {
+                    continue;
                 }
             }
         }
