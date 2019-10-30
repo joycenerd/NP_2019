@@ -84,7 +84,7 @@ int handleSocket(int fd) {
         }
     }
 
-    if(strncmp(&buf[0],"GET /\0",6)==0 || !strncmp(&buf[0],"get /\0",6)==0) {
+    if(strncmp(&buf[0],"GET /\0",6)==0 || strncmp(&buf[0],"get /\0",6)==0) {
         strcpy(buf,"GET /index.html\0");
     }
 
@@ -107,6 +107,14 @@ int handleSocket(int fd) {
 
     int filefd=open(&buf[5],O_RDONLY);
     if(fd==-1) write(fd,"failed to open the file",strlen("failed to open the file"));
+    sprintf(buf,"HTTP/1.0 200 OK\r\nContent-Type:%s\r\n\r\n",fstr);
+    write(fd,buf,strlen(buf));
+
+    ret=read(filefd,buf,(size_t)BUFSIZE);
+    while(ret>0){
+        write(fd,buf,ret);
+        ret=read(filefd,buf,(size_t)BUFSIZE);
+    }
 
     return 0;
 }
@@ -171,7 +179,6 @@ int main(int argc,char **argv) {
         }
 
         // patrol all the socket in fd_set
-        
         for(int i=0;i<FD_SETSIZE;i++) {
             if(FD_ISSET(i,&readfdSet)) {
                 if(i==listenfd) {
