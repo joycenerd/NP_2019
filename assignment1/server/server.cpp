@@ -190,8 +190,13 @@ int main(int argc,char **argv) {
                     }
                     FD_SET(newfd,&activefdSet);
                 }
+
+                // execute the request from the client
                 else {
-                    continue;
+                    if(!handleSocket(i)) {
+                        close(i);
+                        FD_CLR(i,&activefdSet);
+                    }
                 }
             }
         }
