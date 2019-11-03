@@ -14,7 +14,12 @@
 <img src="./images/my_composition_2.png" alt="My image composition" style="width:800px;height:450;">
 <br>
 This is an image
-<br>
-Please select file: <input type="file" name="input file">
+<br><br>
+<form id="fileuploadform" method="post" action="./datastore/">
+  <input id="fileipload" type="file" accept="images/*">
+  <input type="submit" value="submit" id="submit" />
+</form>
+
 </body>
+
 </html>
