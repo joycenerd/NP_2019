@@ -43,7 +43,8 @@ int handleSocket(int fd) {
   // read the request from the browser
   ret = read(fd, buf, (size_t)BUFSIZE);
 
-  printf("%s",buf);
+  //printf("%s",buf);
+  for(i=0;i<ret;i++) printf("%c",buf[i]);
 
   if (ret == 0 || ret == -1) {
     perror("EROR: read\n");
@@ -65,7 +66,7 @@ int handleSocket(int fd) {
   if (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "get ", 4) == 0) {
 
     //printf("%s\n",buf);
-    //for(i=0;i<strlen(buf);i++) printf("%c",buf[i]);
+    for(i=0;i<strlen(buf);i++) printf("%c",buf[i]);
 
     for (i = 4; i < BUFSIZE; i++) {
       if (buf[i] == ' ') {
