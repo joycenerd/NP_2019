@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define BUFSIZE 8192
+#define BUFSIZE 200000
 
 using namespace std;
 
