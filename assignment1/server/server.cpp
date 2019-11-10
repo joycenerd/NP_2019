@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define BUFSIZE 8192
+#define BUFSIZE 2000000
 
 using namespace std;
 
@@ -29,6 +29,7 @@ struct {
                   {(char *)"htm", (char *)"text/html"},
                   {(char *)"html", (char *)"text/html"},
                   {(char *)"exe", (char *)"text/plain"},
+                  {(char *)"txt", (char *)"text/txt"},
                   {0, 0}};
 
 const char *CLIENT_FOLDER = "../";
@@ -43,6 +44,7 @@ int handleSocket(int fd) {
   // read the request from the browser
   ret = read(fd, buf, (size_t)BUFSIZE);
 
+  printf("ret=%d\n",ret);
   printf("%s",buf);
 
   if (ret == 0 || ret == -1) {
@@ -54,12 +56,6 @@ int handleSocket(int fd) {
     buf[ret] = 0;
   else
     buf[0] = 0;
-
-  for (i = 0; i < ret; i++) {
-    if (buf[i] == '\r' || buf[i] == '\n') {
-      buf[i] = 0;
-    }
-  }
 
   // Process GET request
   if (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "get ", 4) == 0) {

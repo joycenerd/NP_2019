@@ -15,9 +15,10 @@
 <br>
 This is an image
 <br><br>
-<form method="post" enctype="multipart/form-data" action="/server/server.cpp">
-  <input name="myname" type="text"><br>
-  <input type="submit" value="submit" id="submit">
+<form id="myform" method="POST" action="/server/server.cpp" enctype="multipart/form-data">
+  <!--<input type="file" name="myImage" accept="text/plain" />-->
+  <input name="mytext" type="text" /><br>
+  <input type="submit" value="submit" id="submit" />
 </form>
 
 </body>
