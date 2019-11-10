@@ -43,6 +43,8 @@ int handleSocket(int fd) {
   // read the request from the browser
   ret = read(fd, buf, (size_t)BUFSIZE);
 
+  printf("%s",buf);
+
   if (ret == 0 || ret == -1) {
     perror("EROR: read\n");
     exit(3);
@@ -61,6 +63,9 @@ int handleSocket(int fd) {
 
   // Process GET request
   if (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "get ", 4) == 0) {
+
+    //printf("%s\n",buf);
+    //for(i=0;i<strlen(buf);i++) printf("%c",buf[i]);
 
     for (i = 4; i < BUFSIZE; i++) {
       if (buf[i] == ' ') {
@@ -111,23 +116,20 @@ int handleSocket(int fd) {
     }
   }
 
-    // Process POST request
-  if(strncmp(buf,"POST ",5)==0 || strncmp(buf,"post ",5)==0) {
-      printf("posting\n");
-      for(i=5;i<BUFSIZE;i++) {
-          if(buf[i]== ' ') {
-              buf[i]=0;
-              break;
-          }
+  // Process POST request
+  if (strncmp(buf, "POST ", 5) == 0 || strncmp(buf, "post ", 5) == 0) {
+    
+    //printf("%s\n",buf);
+
+    for (i = 5; i < BUFSIZE; i++) {
+      if (buf[i] == ' ') {
+        buf[i] = 0;
+        break;
       }
-
-    if(strncmp(&buf[0],"POST /\0",7)==0 || strncmp(&buf[0],"post /\0",7)==0) {
-        strcpy(buf,"POST / HTTP/1.0\r\nHost: 0.0.0.0:8080/datastore\r\n");
     }
+
+    
   }
-
-
-
   return 0;
 }
 
