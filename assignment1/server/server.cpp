@@ -11,11 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-<<<<<<< HEAD
-#define BUFSIZE 200000
-=======
 #define BUFSIZE 2000000
->>>>>>> 5ace046ce318d9961633c306738848dd169ac23b
 
 using namespace std;
 
@@ -48,17 +44,35 @@ int handleSocket(int fd) {
   // read the request from the browser
   ret = read(fd, buf, (size_t)BUFSIZE);
 
-<<<<<<< HEAD
-  //printf("%s",buf);
   for(i=0;i<ret;i++) printf("%c",buf[i]);
-=======
-  printf("ret=%d\n",ret);
-  printf("%s",buf);
->>>>>>> 5ace046ce318d9961633c306738848dd169ac23b
 
   if (ret == 0 || ret == -1) {
     perror("EROR: read\n");
     exit(3);
+  }
+
+  // Process POST request
+  if(strncmp(buf,"POST ",5)==0 || strncmp(buf,"post ",5)==0){
+    const char *msgAttr="Content-Disposition: form-data; name=\"mytext\"\r\n\r\n";
+    for(i=6;i<ret;i++) {
+      if(strncmp(buf+i,msgAttr,strlen(msgAttr))==0){
+        printf("\nmatch message\n");
+        break;
+      }
+    }
+    int startIdx=i+strlen(msgAttr);
+    int endIdx=0;
+    for(i=startIdx;i<ret;i++) {
+      if(strncmp(buf+i,"------",6)==0){
+        endIdx=i;
+        break;
+      }
+    }
+    FILE *myFile=fopen("/home/dmplus/NP_2019/assignment1/datastore/myfile.txt","w");
+    if(myFile==NULL) perror("Can't open the file\n");
+    for(i=startIdx;i<endIdx;i++) fprintf(myFile,"%c",buf[i]);
+    fclose(myFile);
+    return 0;
   }
 
   if (ret > 0 && ret < BUFSIZE)
@@ -120,21 +134,6 @@ int handleSocket(int fd) {
       ret = read(filefd, buf, (size_t)BUFSIZE);
     }
   }
-
-  // Process POST request
-  if (strncmp(buf, "POST ", 5) == 0 || strncmp(buf, "post ", 5) == 0) {
-    
-    //printf("%s\n",buf);
-
-    for (i = 5; i < BUFSIZE; i++) {
-      if (buf[i] == ' ') {
-        buf[i] = 0;
-        break;
-      }
-    }
-
-    
-  }
   return 0;
 }
 
@@ -169,7 +168,7 @@ int main(int argc, char **argv) {
 
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serverAddr.sin_port = htons(8080);
+  serverAddr.sin_port = htons(8000);
 
   // create and start listening to network
   ret = bind(listenfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
