@@ -68,10 +68,10 @@ int handleSocket(int fd) {
         break;
       }
     }
-    FILE *myFile=fopen("/home/dmplus/NP_2019/assignment1/datastore/myfile.txt","w");
-    if(myFile==NULL) perror("Can't open the file\n");
-    for(i=startIdx;i<endIdx;i++) fprintf(myFile,"%c",buf[i]);
-    fclose(myFile);
+    //FILE *myFile=fopen("~/NP_2019/assignment1/datastore/myfile.txt","w");
+    //if(myFile==NULL) perror("Can't open the file\n");
+    //for(i=startIdx;i<endIdx;i++) fprintf(myFile,"%c",buf[i]);
+    //fclose(myFile);
     return 0;
   }
 
