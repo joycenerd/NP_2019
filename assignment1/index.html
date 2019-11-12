@@ -16,10 +16,35 @@
 This is an image
 <br><br>
 
-<form id="myform" method="POST" action="./" enctype="multipart/form-data">
-  <!--<input type="file" name="myImage" />-->
+<!--<form id="fileupload" method="post" enctype="multipart/form-data" action="./">
+  <input name="userImage" id="uploadForm" type="file" class="inputFile" />
   <input name="mytext" type="text" /><br>
   <input type="submit" value="submit" id="submit" />
+</form>-->
+
+<script>
+  function doSubmit(){
+    // Form Data
+    var formData = new FormData();
+
+    var fileSelect = document.getElementById("fileSelect");
+    if(fileSelect.files && fileSelect.files.length == 1){
+     var file = fileSelect.files[0]
+     formData.set("file", file , file.name);
+    }
+
+    //var input1 = document.getElementById("input1");
+    //formData.set("input1", input1.value)
+    // Http Request  
+    var request = new XMLHttpRequest();
+    request.open('POST', "http://0.0.0.0:8000/");
+    request.send(formData);
+  }
+</script>
+<form>
+  <!--<input type="text" id="input1"/>-->
+  <input type="file" id="fileSelect"/>
+  <button type="button" onclick="doSubmit()">Submit</button>
 </form>
 
 </body>

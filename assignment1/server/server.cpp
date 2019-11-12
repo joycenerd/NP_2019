@@ -38,7 +38,7 @@ const char *CLIENT_FOLDER = "../";
 int handleSocket(int fd) {
   ssize_t ret;
   static char buf[BUFSIZE + 1];
-  int bufLen, i;
+  int bufLen, i,j;
   char *fstr;
 
   // read the request from the browser
@@ -51,27 +51,51 @@ int handleSocket(int fd) {
     exit(3);
   }
 
+  static char response[100];
   // Process POST request
   if(strncmp(buf,"POST ",5)==0 || strncmp(buf,"post ",5)==0){
-    const char *msgAttr="Content-Disposition: form-data; name=\"mytext\"\r\n\r\n";
+    
+    // get content body's boundary
+    string boundary="\0";
+    for(i=6;i<ret;i++) {
+      if(strncmp(buf+i,"boundary=",strlen("boundary="))==0){
+        printf("\nboundary\n");
+        break;
+      }
+    }
+    i+=strlen("boundary=");
+    while(buf[i]!='\n'){
+      boundary+=buf[i];
+      i++;
+    }
+    cout << boundary << endl;
+
+    // get content name and type
+    const char *msgAttr="Content-Disposition: form-data; name=\"file\"; filename=";
     for(i=6;i<ret;i++) {
       if(strncmp(buf+i,msgAttr,strlen(msgAttr))==0){
-        printf("\nmatch message\n");
+        //printf("\nmatch message\n");
         break;
       }
     }
-    int startIdx=i+strlen(msgAttr);
-    int endIdx=0;
-    for(i=startIdx;i<ret;i++) {
-      if(strncmp(buf+i,"------",6)==0){
-        endIdx=i;
-        break;
-      }
+    i+=strlen("Content-Disposition: form-data; name=\"file\"; filename=")+1;
+    string myFileName="\0";
+    while(buf[i]!='"'){
+      myFileName+=buf[i];
+      i++;
     }
-    //FILE *myFile=fopen("~/NP_2019/assignment1/datastore/myfile.txt","w");
-    //if(myFile==NULL) perror("Can't open the file\n");
-    //for(i=startIdx;i<endIdx;i++) fprintf(myFile,"%c",buf[i]);
-    //fclose(myFile);
+    // cout << myFileName << endl;
+    
+    // write the content to file
+    string wholefilePath="/Users/joycechin/NP_2019/assignment1/datastore/"+myFileName;
+    //cout << wholefilePath << endl;
+    int postFilefd = open(wholefilePath.c_str(), O_RDWR|O_CREAT,0666);
+    if(postFilefd<=0) perror("can't open file\n");
+    while(ret!=0){
+      ret=read(fd, buf, (size_t)BUFSIZE);
+      for(i=0;i<ret;i++) printf("%c",buf[i]);
+    }
+    string jumpString="";
     return 0;
   }
 
@@ -125,7 +149,7 @@ int handleSocket(int fd) {
     int filefd = open(&buf[5], O_RDONLY);
     if (fd == -1)
       write(fd, "failed to open the file", strlen("failed to open the file"));
-    sprintf(buf, "HTTP/1.0 200 OK\r\nContent-Type:%s\r\n\r\n", fstr);
+    sprintf(buf, "HTTP/1.1 200 OK\r\nContent-Type:%s\r\n\r\n", fstr);
     write(fd, buf, strlen(buf));
 
     ret = read(filefd, buf, (size_t)BUFSIZE);
