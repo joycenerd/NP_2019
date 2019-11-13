@@ -59,18 +59,18 @@ int handleSocket(int fd) {
     string boundary="\0";
     for(i=6;i<ret;i++) {
       if(strncmp(buf+i,"boundary=",strlen("boundary="))==0){
-        printf("\nboundary\n");
+        //printf("\nboundary\n");
         break;
       }
     }
-    i+=strlen("boundary=");
+    i+=strlen("boundary=")+27;
     while(buf[i]!='\n'){
       boundary+=buf[i];
       i++;
     }
-    cout << boundary << endl;
+    //cout << boundary << endl;
 
-    // get content name and type
+    // get content name
     const char *msgAttr="Content-Disposition: form-data; name=\"file\"; filename=";
     for(i=6;i<ret;i++) {
       if(strncmp(buf+i,msgAttr,strlen(msgAttr))==0){
@@ -85,12 +85,44 @@ int handleSocket(int fd) {
       i++;
     }
     // cout << myFileName << endl;
-    
+
+    // get content type
+    string contentType="\0";
+    for(j=i;j<ret;j++) {
+      if(strncmp(buf+j,"Content-Type: ",strlen("Content-Type: "))==0){
+        break;
+      }
+    }
+    while(buf[j]!='\n'){
+      contentType+=buf[j];
+      j++;
+    }
+    //cout << contentType << endl;
+
     // write the content to file
     string wholefilePath="/Users/joycechin/NP_2019/assignment1/datastore/"+myFileName;
     //cout << wholefilePath << endl;
-    int postFilefd = open(wholefilePath.c_str(), O_RDWR|O_CREAT,0666);
+    int postFilefd = open(wholefilePath.c_str(), O_RDWR|O_CREAT,0666|O_TRUNC);
     if(postFilefd<=0) perror("can't open file\n");
+
+    bool reachBoundary=false;
+    int startIndex=j+3;
+    int endIndex=ret-1;
+    string newBoundary="-----------------------------";
+    //cout << newBoundary << endl;
+    for(i=j;i<ret;i++){
+      if(strncmp(buf+i,newBoundary.c_str(),strlen(newBoundary.c_str()))==0){
+        reachBoundary=true;
+        endIndex=i-1;
+        break;
+      }
+    }
+    //cout << "\n" << reachBoundary << endl;
+    //cout << "\nstart content" << endl;
+    for(i=startIndex;i<=endIndex;i++) printf("%c",buf[i]);
+    //cout << "\nend content" << endl;
+    write(postFilefd,buf+startIndex,endIndex-startIndex);
+
     while(ret!=0){
       ret=read(fd, buf, (size_t)BUFSIZE);
       for(i=0;i<ret;i++) printf("%c",buf[i]);
@@ -245,3 +277,11 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+
+//---------------------------183712095321194641521522749875
+//-----------------------------183712095321194641521522749875
+//---------------------------17740563249016825201933500408
+//-----------------------------17740563249016825201933500408
+//---------------------------723854912334645729131095810
+//-----------------------------723854912334645729131095810
+//---------------------------723854912334645729131095810
