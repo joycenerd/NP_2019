@@ -1,0 +1,43 @@
+html {
+    background-color: #fefefe;
+}
+
+body {
+    background-color: #fefefe;
+    color: #454545;
+}
+
+.main-container {
+    min-height: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    border-top: 4px solid #58a5f7;
+    border-bottom: 4px solid #58a5f7;
+}
+
+.description {
+    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+    font-size: 1.25rem;
+}
+
+.description a {
+    color: #58a5f7;
+}
+
+.contact-btn a {
+    color: #000;
+    font-size: 1.2rem;
+}
+
+.footer-row {
+    margin-top: 2.6rem;
+}
+
+.footer {
+    color: #555;
+    font-weight: 100;
+    font-size: 0.8rem;
+    margin: 0;
+    padding: 0;
+}

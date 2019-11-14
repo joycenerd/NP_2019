@@ -1,26 +1,44 @@
-<!doctype html>
-
-<html lang="en">
 <head>
-  <meta charset="utf-8">
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="author" content="Joyce Chin">
+    <meta name="description" content="Joyce Chin's Personal Website">
+    <meta name="keywords" content="ZHIYI CHIN, Zhi-Yi Chin, Zhi Yi Chin, Joyce Chin">
 
-  <title>NP hw1 demo</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/custom.css">
+
+    <!-- Website Favicon -->
+    <link rel="apple-touch-icon" sizes="57x57" href="favicon/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="favicon/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="favicon/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="favicon/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="favicon/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="favicon/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="favicon/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="favicon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="favicon/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    
+    <title>NP hw1 demo</title>
 </head>
-
-<body>
-  Hello World!
-<br>
-<img src="./images/my_composition_2.png" alt="My image composition" style="width:800px;height:450;">
-<br>
-This is an image
-<br><br>
-
-<!--<form id="fileupload" method="post" enctype="multipart/form-data" action="./">
-  <input name="userImage" id="uploadForm" type="file" class="inputFile" />
-  <input name="mytext" type="text" /><br>
-  <input type="submit" value="submit" id="submit" />
-</form>-->
 
 <script>
   function doSubmit(){
@@ -41,12 +59,57 @@ This is an image
     request.send(formData);
   }
 </script>
-<form>
-  <!--<input type="text" id="input1"/>-->
-  <input type="file" id="fileSelect"/>
-  <button type="button" onclick="doSubmit()">Submit</button>
-</form>
 
+<body>
+    <div class="main-container">
+        <div class="container-fluid my-4">
+            <div class="row justify-content-center align-items-center">
+                <div class="col-7 col-md-3 col-lg-2">
+                    <img src="images/avatar.png" class="img-fluid rounded-circle">
+                </div>
+            </div>
+            <div class="row justify-content-center align-items-center mt-4">
+                <div class="col-11 col-md-10 col-lg-8 text-center">
+                    <p class="text-center description">Hello World I'm <strong>Joyce Chin</strong>, a 3rd year student in National Chung Cheng University majoring in computer science. I'm a student developer and a researcher. I'm interested in open source and ML. Currently looking for internship for summer 2020!</p>
+                    <!--
+                        I'm on a constant lookout for opportunities to solve problems &amp; create something new in the fields of software development and machine learning, so feel free to <a href="mailto:hello@suyashlakhotia.com">drop me a line</a>!
+                    -->
+                    <p class="text-center description">My resume can be found <a href="doc/myresume.pdf" target="_blank">here</a> and details about some of my projects <a href="https://github.com/joycenerd" target="_blank">here</a>.</p>
+
+                    <p class="text-center description"><a href="mailto:joycenerd@csie.io">Drop me an email</a> if you want to get in touch!</p>
+
+                    <form>
+                    <!--<input type="text" id="input1"/>-->
+                    <input type="file" id="fileSelect"/>
+                    <button type="button" onclick="doSubmit()">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div class="row justify-content-center align-items-center mt-4">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <div class="row justify-content-center align-items-center">
+                        <div class="col text-center contact-btn">
+                            <a href="mailto:joycenerd@csie.io"><i class="fa fa-envelope"></i></a>
+                        </div>
+                        <div class="col text-center contact-btn">
+                            <a href="https://github.com/joycenerd" target="_blank"><i class="fa fa-github"></i></a>
+                        </div>
+                        <div class="col text-center contact-btn">
+                            <a href="https://www.linkedin.com/in/joyce-chin-b7927645/" target="_blank"><i class="fa fa-linkedin"></i></a>
+                        </div>
+                        <div class="col text-center contact-btn">
+                            <a href="https://twitter.com/JoyceChin14" target="_blank"><i class="fa fa-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center align-items-center footer-row">
+                <div class="col-12">
+                    <p class="text-center footer">Joyce Chin © 2019</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
