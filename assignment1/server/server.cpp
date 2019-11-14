@@ -11,7 +11,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define BUFSIZE 2000000
+#define BUFSIZE 300000
+// 2000000
 
 using namespace std;
 
@@ -44,8 +45,6 @@ int handleSocket(int fd) {
   // read the request from the browser
   ret = read(fd, buf, (size_t)BUFSIZE);
 
-  for(i=0;i<ret;i++) printf("%c",buf[i]);
-
   if (ret == 0 || ret == -1) {
     perror("EROR: read\n");
     exit(3);
@@ -59,7 +58,6 @@ int handleSocket(int fd) {
     string boundary="\0";
     for(i=6;i<ret;i++) {
       if(strncmp(buf+i,"boundary=",strlen("boundary="))==0){
-        //printf("\nboundary\n");
         break;
       }
     }
@@ -68,13 +66,11 @@ int handleSocket(int fd) {
       boundary+=buf[i];
       i++;
     }
-    //cout << boundary << endl;
 
     // get content name
     const char *msgAttr="Content-Disposition: form-data; name=\"file\"; filename=";
     for(i=6;i<ret;i++) {
       if(strncmp(buf+i,msgAttr,strlen(msgAttr))==0){
-        //printf("\nmatch message\n");
         break;
       }
     }
@@ -84,7 +80,6 @@ int handleSocket(int fd) {
       myFileName+=buf[i];
       i++;
     }
-    // cout << myFileName << endl;
 
     // get content type
     string contentType="\0";
@@ -97,37 +92,45 @@ int handleSocket(int fd) {
       contentType+=buf[j];
       j++;
     }
-    //cout << contentType << endl;
 
     // write the content to file
     string wholefilePath="/Users/joycechin/NP_2019/assignment1/datastore/"+myFileName;
-    //cout << wholefilePath << endl;
     int postFilefd = open(wholefilePath.c_str(), O_RDWR|O_CREAT,0666|O_TRUNC);
     if(postFilefd<=0) perror("can't open file\n");
 
     bool reachBoundary=false;
     int startIndex=j+3;
     int endIndex=ret-1;
-    string newBoundary="-----------------------------";
-    //cout << newBoundary << endl;
     for(i=j;i<ret;i++){
-      if(strncmp(buf+i,newBoundary.c_str(),strlen(newBoundary.c_str()))==0){
+      if(strncmp(buf+i,"-------------------------",strlen("-------------------------"))==0){
         reachBoundary=true;
         endIndex=i-1;
         break;
       }
     }
-    //cout << "\n" << reachBoundary << endl;
-    //cout << "\nstart content" << endl;
-    for(i=startIndex;i<=endIndex;i++) printf("%c",buf[i]);
-    //cout << "\nend content" << endl;
-    write(postFilefd,buf+startIndex,endIndex-startIndex);
+    //if(reachBoundary==true) cout <<"\n BOUNDARY HAHA" << endl;
+    write(postFilefd,buf+startIndex,endIndex-startIndex+1);
+    int num=1;
 
-    while(ret!=0){
-      ret=read(fd, buf, (size_t)BUFSIZE);
-      for(i=0;i<ret;i++) printf("%c",buf[i]);
+    while(ret>=0 && reachBoundary==false){
+      //cout << "\n" << ret << endl;
+      ret=read(fd,buf,(size_t)BUFSIZE);
+      for(i=0;i<ret;i++){
+        if(strncmp(buf+i,"-------------------------",strlen("-------------------------"))==0){
+          reachBoundary=true;
+          //cout << "\nSECOND BOUNDARY"<< endl;
+          break;
+        }
+      }
+      if(reachBoundary==true) write(postFilefd,buf,i);
+      else write(postFilefd,buf,strlen(buf));
+      //cout << "\nCHECK: " << ++num << endl;
     }
-    string jumpString="";
+    close(postFilefd);
+
+    // send response
+    sprintf(buf, "HTTP/1.1 200 OK\r\n%s\r\n\r\n", contentType.c_str());
+    write(fd, buf, strlen(buf));
     return 0;
   }
 
@@ -140,7 +143,7 @@ int handleSocket(int fd) {
   if (strncmp(buf, "GET ", 4) == 0 || strncmp(buf, "get ", 4) == 0) {
 
     //printf("%s\n",buf);
-    for(i=0;i<strlen(buf);i++) printf("%c",buf[i]);
+    //for(i=0;i<strlen(buf);i++) printf("%c",buf[i]);
 
     for (i = 4; i < BUFSIZE; i++) {
       if (buf[i] == ' ') {
