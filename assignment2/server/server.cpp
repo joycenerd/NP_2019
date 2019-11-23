@@ -8,10 +8,57 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string>
+#include <iostream>
 #define MAX_CONN_LIMIT 30
 #define MAX_BUFF_SIZE 8192
 #define PORT 8000
 using namespace std;
+
+typedef struct socketinfo{
+  int fd;
+  string ip;
+  int port;
+}SocketInfo;
+
+void init(SocketInfo activeClient[],int sizes){
+  for(int i=0;i<sizes;i++) {
+    activeClient[i].fd=0;
+    activeClient[i].ip="\0";
+    activeClient[i].port=0;
+  }
+  return;
+}
+
+// list all the client
+int list(int clientSocket[],int maxClient,fd_set readfdSet,int currentSocket,SocketInfo activeClient[]) {
+  int socketfd,addressLength;
+  init(activeClient,maxClient);
+  int idx=0;
+  struct sockaddr_in address;
+  for(int i=0;i<maxClient;i++){
+    socketfd = clientSocket[i];
+    if(getpeername(socketfd, (struct sockaddr *)&address, (socklen_t *)&addressLength)==0){
+      activeClient[idx].fd=socketfd;
+      activeClient[idx].ip=inet_ntoa(address.sin_addr);
+      activeClient[idx].port=ntohs(address.sin_port);
+      idx++;
+    }
+  }
+  //cout << "idx: " << idx << endl;
+  char buffer[MAX_BUFF_SIZE];
+  string userinfo;
+  userinfo+="------------------------------\n";
+  for(int i=0;i<idx;i++) {
+    userinfo+="fd: "+to_string(activeClient[i].fd)+", ";
+    userinfo+="ip: "+activeClient[i].ip+", ";
+    userinfo+="port: "+to_string(activeClient[i].port)+"\n";
+  }
+  userinfo+="------------------------------\n";
+  //cout << userinfo << endl;
+  send(currentSocket,userinfo.c_str(),strlen(userinfo.c_str()),0);
+  return idx;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -19,10 +66,11 @@ int main(int argc, char *argv[]) {
   int maxClient = MAX_CONN_LIMIT;
   int clientSocket[MAX_CONN_LIMIT], serverSocket, addressLength, maxSocketfd,
       socketfd, activity, newSocket;
-  int readMessage;
+  int readMessage,usedSpace;
   struct sockaddr_in address;
   fd_set readfdSet;
   char buffer[MAX_BUFF_SIZE + 1];
+  SocketInfo activeClient[maxClient];
 
   // intialize all the client sockets
   for (int i = 0; i < maxClient; i++) {
@@ -92,13 +140,13 @@ int main(int argc, char *argv[]) {
       if (send(newSocket, message, strlen(message), 0) != strlen(message)) {
         perror("send");
       }
-      puts("Welcome message send successfully\n");
+      puts("Welcome message send successfully");
 
       // add new socket to array of sockets
       for (int i = 0; i < maxClient; i++) {
         if (clientSocket[i] == 0) {
           clientSocket[i] = newSocket;
-          printf("Adding to list of sockets as %d\n", i);
+          printf("Adding to list of sockets as %d\n\n", i);
           break;
         }
       }
@@ -115,7 +163,7 @@ int main(int argc, char *argv[]) {
         if (readMessage == 0) {
           getpeername(socketfd, (struct sockaddr *)&address,
                       (socklen_t *)&addressLength);
-          printf("Host disconnected\nip: %s\nport: %d\n",
+          printf("Host disconnected\nfd: %d\nip: %s\nport: %d\n\n", socketfd,
                  inet_ntoa(address.sin_addr), ntohs(address.sin_port));
           close(socketfd);
           clientSocket[i] = 0;
@@ -123,7 +171,13 @@ int main(int argc, char *argv[]) {
         // echo back the same message that came in
         else {
           buffer[readMessage] = '\0';
-          send(socketfd, buffer, strlen(buffer), 0);
+          // client ask to list all the other client
+          if(strncmp(buffer,"list",strlen("list"))==0) {
+            usedSpace=list(clientSocket,maxClient,readfdSet,socketfd,activeClient);
+          }
+          else {
+            send(socketfd, buffer, strlen(buffer), 0);
+          }
         }
       }
     }

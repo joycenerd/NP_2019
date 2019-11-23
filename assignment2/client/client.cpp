@@ -4,13 +4,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstdlib>
-#define MAX_LENGTH 1024
+#define MAX_LENGTH 8192
+#define PORT 8000
 using namespace std;
 
 
 void func(int socketfd) {
     char buffer[MAX_LENGTH+1];
     for(;;) {
+        bzero(buffer,sizeof(buffer));
         fgets(buffer,MAX_LENGTH,stdin);
         write(socketfd,buffer,sizeof(buffer));
         bzero(buffer,sizeof(buffer));
@@ -26,7 +28,7 @@ int main()
     int socketfd, connfd; 
     struct sockaddr_in serverAddress, client; 
   
-    // socket create and varification 
+    // socket create and veSrification 
     socketfd = socket(AF_INET, SOCK_STREAM, 0); 
     if (socketfd == -1) { 
         printf("socket creation failed...\n"); 
@@ -39,7 +41,7 @@ int main()
     // assign IP, PORT 
     serverAddress.sin_family = AF_INET; 
     serverAddress.sin_addr.s_addr = INADDR_ANY; 
-    serverAddress.sin_port = htons(8000); 
+    serverAddress.sin_port = htons(PORT); 
   
     // connect the client socket to server socket
     char buffer[MAX_LENGTH+1];
