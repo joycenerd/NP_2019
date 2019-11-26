@@ -60,13 +60,17 @@ int list(int clientSocket[],int maxClient,fd_set readfdSet,int currentSocket,Soc
   return idx;
 }
 
+int invite(int sockfd,SocketInfo activeClient){
+  return 0;
+}
+
 
 int main(int argc, char *argv[]) {
 
   int maxClient = MAX_CONN_LIMIT;
   int clientSocket[MAX_CONN_LIMIT], serverSocket, addressLength, maxSocketfd,
       socketfd, activity, newSocket;
-  int readMessage,usedSpace;
+  int readMessage,usedSpace,opponentfd;
   struct sockaddr_in address;
   fd_set readfdSet;
   char buffer[MAX_BUFF_SIZE + 1];
@@ -174,6 +178,9 @@ int main(int argc, char *argv[]) {
           // client ask to list all the other client
           if(strncmp(buffer,"list",strlen("list"))==0) {
             usedSpace=list(clientSocket,maxClient,readfdSet,socketfd,activeClient);
+          }
+          else if(strncmp(buffer,"challenge",strlen("challenge"))==0) {
+             opponentfd=invite(usedSpace,activeClient);
           }
           else {
             send(socketfd, buffer, strlen(buffer), 0);
