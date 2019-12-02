@@ -9,25 +9,19 @@
 #define PORT 8000
 using namespace std;
 
-void login(int socketfd) {
-    char buffer[MAX_LENGTH+1];
-    scanf("%s",buffer);
-    send(socketfd,buffer,sizeof(buffer));
-    return;
-}
-
 
 void chat(int socketfd) {
     char buffer[MAX_LENGTH+1];
+    int readMessage;
     for(;;) {
-        //printf("Chatting start here\n");
-        login(socketfd);
-        read(socketfd,buffer,sizeof(buffer));
-        printf("%s",buffer);
         bzero(buffer,sizeof(buffer));
         scanf("%s",buffer);
-        write(socketfd,buffer,sizeof(buffer));
+        //printf("%s",buffer);
+        write(socketfd,buffer,strlen(buffer));
         bzero(buffer,sizeof(buffer));
+        readMessage=read(socketfd,buffer,MAX_LENGTH);
+        buffer[readMessage]='\0';
+        printf("%s",buffer);
     }
     return;
 }
