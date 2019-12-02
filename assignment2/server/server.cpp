@@ -21,6 +21,14 @@ typedef struct socketinfo{
   int port;
 }SocketInfo;
 
+typedef struct clientList {
+  string username;
+  string password;
+  bool isOnline;
+}ClientList;
+
+ClientList clientInfo[7];
+
 void init(SocketInfo activeClient[],int sizes){
   for(int i=0;i<sizes;i++) {
     activeClient[i].fd=0;
@@ -30,43 +38,26 @@ void init(SocketInfo activeClient[],int sizes){
   return;
 }
 
-// list all the client
-int list(int clientSocket[],int maxClient,fd_set readfdSet,int currentSocket,SocketInfo activeClient[]) {
-  int socketfd,addressLength;
-  init(activeClient,maxClient);
-  int idx=0;
-  struct sockaddr_in address;
-  for(int i=0;i<maxClient;i++){
-    socketfd = clientSocket[i];
-    if(getpeername(socketfd, (struct sockaddr *)&address, (socklen_t *)&addressLength)==0){
-      activeClient[idx].fd=socketfd;
-      activeClient[idx].ip=inet_ntoa(address.sin_addr);
-      activeClient[idx].port=ntohs(address.sin_port);
-      idx++;
-    }
-  }
-  //cout << "idx: " << idx << endl;
-  char buffer[MAX_BUFF_SIZE];
-  string userinfo;
-  userinfo+="------------------------------\n";
-  for(int i=0;i<idx;i++) {
-    userinfo+="fd: "+to_string(activeClient[i].fd)+", ";
-    userinfo+="ip: "+activeClient[i].ip+", ";
-    userinfo+="port: "+to_string(activeClient[i].port)+"\n";
-  }
-  userinfo+="------------------------------\n";
-  //cout << userinfo << endl;
-  send(currentSocket,userinfo.c_str(),strlen(userinfo.c_str()),0);
-  return idx;
+// initialize all the client info
+void initClientInfo() {
+  clientInfo[0].username="hank"; clientInfo[0].password="1234"; clientInfo[0].isOnline=false;
+  clientInfo[1].username="henry"; clientInfo[1].password="1234"; clientInfo[1].isOnline=false;
+  clientInfo[2].username="joyce"; clientInfo[2].password="1234"; clientInfo[2].isOnline=false;
+  clientInfo[3].username="edward"; clientInfo[3].password="1234"; clientInfo[3].isOnline=false;
+  clientInfo[4].username="patty"; clientInfo[4].password="1234"; clientInfo[4].isOnline=false;
+  clientInfo[5].username="helen"; clientInfo[5].password="1234"; clientInfo[5].isOnline=false;
 }
 
-int invite(int sockfd,SocketInfo activeClient){
-  return 0;
+void login(int socketfd) {
+  char buffer[MAX_BUFF_SIZE + 1];
+  bzero(buffer,sizeof(buffer));
+  read(socketfd,buffer,MAX_BUFF_SIZE);
+  printf("%s",buffer);
+  return;
 }
 
 
 int main(int argc, char *argv[]) {
-
   int maxClient = MAX_CONN_LIMIT;
   int clientSocket[MAX_CONN_LIMIT], serverSocket, addressLength, maxSocketfd,
       socketfd, activity, newSocket;
@@ -75,6 +66,9 @@ int main(int argc, char *argv[]) {
   fd_set readfdSet;
   char buffer[MAX_BUFF_SIZE + 1];
   SocketInfo activeClient[maxClient];
+
+  // initialize all the client info
+  initClientInfo();
 
   // intialize all the client sockets
   for (int i = 0; i < maxClient; i++) {
@@ -106,7 +100,7 @@ int main(int argc, char *argv[]) {
   // listen for incoming connections
   addressLength = sizeof(address);
   puts("Waiting for connections...\n");
-  const char *message = "Hello World! It's server sending messages\n";
+  const char *message = "Hello World! It's server sending messages\nEnter your username: ";
 
   while (true) {
 
@@ -146,6 +140,8 @@ int main(int argc, char *argv[]) {
       }
       puts("Welcome message send successfully");
 
+      login(newSocket);
+
       // add new socket to array of sockets
       for (int i = 0; i < maxClient; i++) {
         if (clientSocket[i] == 0) {
@@ -176,15 +172,6 @@ int main(int argc, char *argv[]) {
         else {
           buffer[readMessage] = '\0';
           // client ask to list all the other client
-          if(strncmp(buffer,"list",strlen("list"))==0) {
-            usedSpace=list(clientSocket,maxClient,readfdSet,socketfd,activeClient);
-          }
-          else if(strncmp(buffer,"challenge",strlen("challenge"))==0) {
-             opponentfd=invite(usedSpace,activeClient);
-          }
-          else {
-            send(socketfd, buffer, strlen(buffer), 0);
-          }
         }
       }
     }

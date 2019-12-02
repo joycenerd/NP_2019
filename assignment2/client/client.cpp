@@ -4,20 +4,30 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <iostream>
 #define MAX_LENGTH 8192
 #define PORT 8000
 using namespace std;
 
+void login(int socketfd) {
+    char buffer[MAX_LENGTH+1];
+    scanf("%s",buffer);
+    send(socketfd,buffer,sizeof(buffer));
+    return;
+}
 
-void func(int socketfd) {
+
+void chat(int socketfd) {
     char buffer[MAX_LENGTH+1];
     for(;;) {
-        bzero(buffer,sizeof(buffer));
-        fgets(buffer,MAX_LENGTH,stdin);
-        write(socketfd,buffer,sizeof(buffer));
-        bzero(buffer,sizeof(buffer));
+        //printf("Chatting start here\n");
+        login(socketfd);
         read(socketfd,buffer,sizeof(buffer));
         printf("%s",buffer);
+        bzero(buffer,sizeof(buffer));
+        scanf("%s",buffer);
+        write(socketfd,buffer,sizeof(buffer));
+        bzero(buffer,sizeof(buffer));
     }
     return;
 }
@@ -57,7 +67,7 @@ int main()
     } 
   
     // function for chat 
-    func(socketfd); 
+    chat(socketfd); 
   
     // close the socket 
     close(socketfd); 
