@@ -187,7 +187,8 @@ int main(int argc, char *argv[]) {
         perror("send");
       }
       puts("Welcome message send successfully");
-
+      
+      // New connection need to login
       username=login(newSocket);
 
       // add new socket to array of sockets
