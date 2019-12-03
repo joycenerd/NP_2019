@@ -21,6 +21,7 @@ typedef struct socketinfo{
   int port;
 }SocketInfo;
 
+// List all the registered clients
 typedef struct clientList {
   string username;
   string password;
@@ -49,6 +50,7 @@ void initClientInfo() {
   clientInfo[5].username="helen"; clientInfo[5].password="1234"; clientInfo[5].isOnline=false; clientInfo[5].pos=-1;
 }
 
+// check if the new coming user exist and not online right now
 bool searchUsername(char *buffer) {
   for(int i=0;i<6;i++) {
     string name=buffer;
@@ -57,6 +59,7 @@ bool searchUsername(char *buffer) {
   return false;
 }
 
+// client login
 string login(int socketfd) {
   char buffer[MAX_BUFF_SIZE + 1];
   bool isValidUsername;
@@ -93,7 +96,7 @@ string login(int socketfd) {
   return username;
 }
 
-
+// Mark the new lgoin user online
 void markOnline(int pos,string username) {
   for(int i=0;i<6;i++) {
     if(username==clientInfo[i].username) {
