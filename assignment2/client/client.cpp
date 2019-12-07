@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #define MAX_LENGTH 8192
-#define PORT 8002
+#define PORT 8001
 using namespace std;
 
 

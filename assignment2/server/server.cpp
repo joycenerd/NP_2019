@@ -10,9 +10,10 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <vector>
 #define MAX_CONN_LIMIT 30
 #define MAX_BUFF_SIZE 8192
-#define PORT 8002
+#define PORT 8001
 using namespace std;
 
 typedef struct socketinfo{
@@ -145,12 +146,92 @@ string getUsername(int socketfd) {
   return "";
 }
 
+string modifyBoard(string board,char *pos,int user,vector<int> &grids) {
+  string choice=pos;
+  int num;
+
+  num=atoi(pos);
+  
+  for(int i=0;i<board.length();i++) {
+    if(choice[0]==board[i]) {
+      if(user==1){
+        board[i]='O';
+        grids[num]=1;
+      }
+      else{
+        board[i]='X';
+        grids[i]=2;
+      }
+      return board;
+    }
+  }
+  return board;
+}
+
+bool checkWin(vector<int> &grids,int user) {
+  if(grids[1]==user && grids[1]==grids[2] && grids[2]==grids[3]) return true;
+  else if(grids[4]==user && grids[4]==grids[5] && grids[5]==grids[6]) return true;
+  else if(grids[7]==user && grids[7]==grids[8] && grids[8]==grids[9]) return true;
+  else if(grids[1]==user && grids[1]==grids[4] && grids[4]==grids[7]) return true;
+  else if(grids[2]==user && grids[2]==grids[5] && grids[5]==grids[8]) return true;
+  else if(grids[3]==user && grids[3]==grids[6] && grids[6]==grids[9]) return true;
+  else if(grids[1]==user && grids[1]==grids[5] && grids[5]==grids[9]) return true;
+  else if(grids[3]==user && grids[3]==grids[5] && grids[5]==grids[7]) return true;
+  return false;
+}
+
 void inGame(int fd1,int fd2) {
   string user1=getUsername(fd1);
   string user2=getUsername(fd2);
   string board=user1+":O "+user2+":X\n ----- ----- -----\n|     |     |     |\n|  1  |  2  |  3  |\n|     |     |     |\n ----- ----- -----\n|     |     |     |\n|  4  |  5  |  6  |\n|     |     |     |\n ----- ----- -----\n|     |     |     |\n|  7  |  8  |  9  |\n|     |     |     |\n ----- ----- -----\n";
+  bool end=false;
+  char buffer[MAX_BUFF_SIZE+1];
+  int readMessage;
+  string message;
+  vector<int> grids(10,0);
+
   send(fd1,board.c_str(),strlen(board.c_str()),0);
   send(fd2,board.c_str(),strlen(board.c_str()),0);
+  int turn=0;
+  while(turn<9) {
+    bzero(buffer,sizeof(buffer));
+    if(turn%2==0) {
+      readMessage=read(fd1,buffer,MAX_BUFF_SIZE);
+      if(readMessage==0) {
+        message=user1+"left the game\n";
+        send(fd2,message.c_str(),strlen(message.c_str()),0);
+        return;
+      }
+    }
+    else {
+      readMessage=read(fd2,buffer,MAX_BUFF_SIZE);
+      if(readMessage==0) {
+        message=user2+"left the game\n";
+        send(fd1,message.c_str(),strlen(message.c_str()),0);
+        return;
+      }
+    }
+    int user=(turn%2)+1;
+    board=modifyBoard(board,buffer,user,grids);
+    sleep(0.1);
+    send(fd1,board.c_str(),strlen(board.c_str()),0);
+    send(fd2,board.c_str(),strlen(board.c_str()),0);
+    if(checkWin(grids,user)) {
+      message="";
+      if(user==1) message=user1+" won!\n";
+      else message=user2+" won!\n";
+
+      send(fd1,message.c_str(),strlen(message.c_str()),0);
+      send(fd2,message.c_str(),strlen(message.c_str()),0);
+      return;
+    }
+    turn++;
+  }
+  message="";
+  message="End of Game with a Tie\n";
+  send(fd1,message.c_str(),strlen(message.c_str()),0);
+  send(fd2,message.c_str(),strlen(message.c_str()),0);
+  return;
 }
  
 void challenge(int socketfd) {
@@ -172,7 +253,7 @@ void challenge(int socketfd) {
   bzero(buffer,sizeof(buffer));
   readMessage=read(pos,buffer,MAX_BUFF_SIZE);
   buffer[readMessage]='\0';
-  printf("%s\n",buffer);
+  //printf("%s\n",buffer);
   if(buffer[0]=='n') {
     message="";
     message=username+" rejected your invitation\n";
@@ -308,6 +389,7 @@ int main(int argc, char *argv[]) {
           else if(strncmp(buffer,"challenge",strlen("challenge"))==0) {
             challenge(socketfd);
           }
+          else send(socketfd,buffer,strlen(buffer),0);
         }
       }
     }
