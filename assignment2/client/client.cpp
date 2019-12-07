@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #define MAX_LENGTH 8192
-#define PORT 8000
+#define PORT 8002
 using namespace std;
 
 
@@ -17,7 +17,7 @@ void chat(int socketfd) {
         bzero(buffer,sizeof(buffer));
         scanf("%s",buffer);
         //printf("%s",buffer);
-        write(socketfd,buffer,strlen(buffer));
+        if(buffer[0]==':') write(socketfd,buffer+1,strlen(buffer+1));
         bzero(buffer,sizeof(buffer));
         readMessage=read(socketfd,buffer,MAX_LENGTH);
         buffer[readMessage]='\0';

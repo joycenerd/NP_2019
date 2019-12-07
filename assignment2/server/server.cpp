@@ -12,7 +12,7 @@
 #include <iostream>
 #define MAX_CONN_LIMIT 30
 #define MAX_BUFF_SIZE 8192
-#define PORT 8000
+#define PORT 8002
 using namespace std;
 
 typedef struct socketinfo{
@@ -26,7 +26,7 @@ typedef struct clientList {
   string username;
   string password;
   bool isOnline;
-  int pos;
+  int fd;
 }ClientList;
 
 ClientList clientInfo[7];
@@ -42,12 +42,12 @@ void init(SocketInfo activeClient[],int sizes){
 
 // initialize all the client info
 void initClientInfo() {
-  clientInfo[0].username="hank"; clientInfo[0].password="1234"; clientInfo[0].isOnline=false; clientInfo[0].pos=-1;
-  clientInfo[1].username="henry"; clientInfo[1].password="1234"; clientInfo[1].isOnline=false; clientInfo[1].pos=-1;
-  clientInfo[2].username="joyce"; clientInfo[2].password="1234"; clientInfo[2].isOnline=false; clientInfo[2].pos=-1;
-  clientInfo[3].username="edward"; clientInfo[3].password="1234"; clientInfo[3].isOnline=false; clientInfo[3].pos=-1;
-  clientInfo[4].username="patty"; clientInfo[4].password="1234"; clientInfo[4].isOnline=false; clientInfo[4].pos=-1;
-  clientInfo[5].username="helen"; clientInfo[5].password="1234"; clientInfo[5].isOnline=false; clientInfo[5].pos=-1;
+  clientInfo[0].username="hank"; clientInfo[0].password="1234"; clientInfo[0].isOnline=false; clientInfo[0].fd=-1;
+  clientInfo[1].username="henry"; clientInfo[1].password="1234"; clientInfo[1].isOnline=false; clientInfo[1].fd=-1;
+  clientInfo[2].username="joyce"; clientInfo[2].password="1234"; clientInfo[2].isOnline=false; clientInfo[2].fd=-1;
+  clientInfo[3].username="edward"; clientInfo[3].password="1234"; clientInfo[3].isOnline=false; clientInfo[3].fd=-1;
+  clientInfo[4].username="patty"; clientInfo[4].password="1234"; clientInfo[4].isOnline=false; clientInfo[4].fd=-1;
+  clientInfo[5].username="helen"; clientInfo[5].password="1234"; clientInfo[5].isOnline=false; clientInfo[5].fd=-1;
 }
 
 // check if the new coming user exist and not online right now
@@ -96,14 +96,91 @@ string login(int socketfd) {
   return username;
 }
 
+void list(int socketfd) {
+  string message="";
+  message+="Current online users:\n";
+  for(int i=0;i<6;i++) {
+    if(clientInfo[i].isOnline==true) message+=("  "+clientInfo[i].username+"\n");
+  }
+  send(socketfd,message.c_str(),strlen(message.c_str()),0);
+  return;
+}
+
 // Mark the new lgoin user online
 void markOnline(int pos,string username) {
   for(int i=0;i<6;i++) {
     if(username==clientInfo[i].username) {
       clientInfo[i].isOnline=true;
-      clientInfo[i].pos=pos;
+      clientInfo[i].fd=pos;
     }
   }
+  return;
+}
+
+void markOffline(int pos) {
+  for(int i=0;i<6;i++) {
+    if(pos==clientInfo[i].fd) {
+      clientInfo[i].isOnline=false;
+      clientInfo[i].fd=-1;
+    }
+  }
+  return;
+}
+
+int checkOnline(string username) {
+  for(int i=0;i<6;i++) {
+    if(username==clientInfo[i].username) {
+      return clientInfo[i].fd;
+    }
+  }
+  return -1;
+}
+
+string getUsername(int socketfd) {
+  for(int i=0;i<6;i++) {
+    if(socketfd==clientInfo[i].fd) {
+      return clientInfo[i].username;
+    }
+  }
+  return "";
+}
+
+void inGame(int fd1,int fd2) {
+  string user1=getUsername(fd1);
+  string user2=getUsername(fd2);
+  string board=user1+":O "+user2+":X\n ----- ----- -----\n|     |     |     |\n|  1  |  2  |  3  |\n|     |     |     |\n ----- ----- -----\n|     |     |     |\n|  4  |  5  |  6  |\n|     |     |     |\n ----- ----- -----\n|     |     |     |\n|  7  |  8  |  9  |\n|     |     |     |\n ----- ----- -----\n";
+  send(fd1,board.c_str(),strlen(board.c_str()),0);
+  send(fd2,board.c_str(),strlen(board.c_str()),0);
+}
+ 
+void challenge(int socketfd) {
+  char buffer[MAX_BUFF_SIZE+1];
+  int readMessage,pos;
+  string username,message;
+
+  send(socketfd,"Who do you want to challenge: ",strlen("Who do you want to challenge: "),0);
+  readMessage=read(socketfd,buffer,MAX_BUFF_SIZE);
+  buffer[readMessage]='\0';
+  username=buffer;
+  pos=checkOnline(username);
+  if(pos==-1) {
+    send(socketfd,"Unsuccessful\n",strlen("Unsuccessful\n"),0);
+    return;
+  }
+  message=getUsername(socketfd)+" wants to challenge you [y/n]: ";
+  send(pos,message.c_str(),strlen(message.c_str()),0);
+  bzero(buffer,sizeof(buffer));
+  readMessage=read(pos,buffer,MAX_BUFF_SIZE);
+  buffer[readMessage]='\0';
+  printf("%s\n",buffer);
+  if(buffer[0]=='n') {
+    message="";
+    message=username+" rejected your invitation\n";
+    send(socketfd,message.c_str(),strlen(message.c_str()),0);
+    return;
+  }
+  inGame(socketfd,pos);
+  return; 
 }
 
 
@@ -199,7 +276,7 @@ int main(int argc, char *argv[]) {
         if (clientSocket[i] == 0) {
           clientSocket[i] = newSocket;
           printf("Adding to list of sockets as %d\n\n", i);
-          markOnline(i,username);
+          markOnline(newSocket,username);
           break;
         }
       }
@@ -218,13 +295,19 @@ int main(int argc, char *argv[]) {
                       (socklen_t *)&addressLength);
           printf("Host disconnected\nfd: %d\nip: %s\nport: %d\n\n", socketfd,
                  inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+          markOffline(socketfd);
           close(socketfd);
           clientSocket[i] = 0;
         }
         // echo back the same message that came in
         else {
           buffer[readMessage] = '\0';
-          // client ask to list all the other client
+          if(strncmp(buffer,"list",strlen("list"))==0) {
+            list(socketfd);
+          }
+          else if(strncmp(buffer,"challenge",strlen("challenge"))==0) {
+            challenge(socketfd);
+          }
         }
       }
     }
