@@ -13,7 +13,7 @@
 #include <vector>
 #define MAX_CONN_LIMIT 30
 #define MAX_BUFF_SIZE 8192
-#define PORT 8001
+#define PORT 8000
 using namespace std;
 
 typedef struct socketinfo{
@@ -97,6 +97,7 @@ string login(int socketfd) {
   return username;
 }
 
+// list all the online users
 void list(int socketfd) {
   string message="";
   message+="Current online users:\n";
@@ -168,6 +169,7 @@ string modifyBoard(string board,char *pos,int user,vector<int> &grids) {
   return board;
 }
 
+// check if the user wins
 bool checkWin(vector<int> &grids,int user) {
   if(grids[1]==user && grids[1]==grids[2] && grids[2]==grids[3]) return true;
   else if(grids[4]==user && grids[4]==grids[5] && grids[5]==grids[6]) return true;
@@ -180,6 +182,7 @@ bool checkWin(vector<int> &grids,int user) {
   return false;
 }
 
+// board game
 void inGame(int fd1,int fd2) {
   string user1=getUsername(fd1);
   string user2=getUsername(fd2);
@@ -190,9 +193,12 @@ void inGame(int fd1,int fd2) {
   string message;
   vector<int> grids(10,0);
 
+  // send original blank board to both users
   send(fd1,board.c_str(),strlen(board.c_str()),0);
   send(fd2,board.c_str(),strlen(board.c_str()),0);
   int turn=0;
+
+  // start playing
   while(turn<9) {
     bzero(buffer,sizeof(buffer));
     if(turn%2==0) {
@@ -212,15 +218,17 @@ void inGame(int fd1,int fd2) {
       }
     }
     int user=(turn%2)+1;
+    // add O/X to the corresponding chosen grid
     board=modifyBoard(board,buffer,user,grids);
     sleep(0.1);
     send(fd1,board.c_str(),strlen(board.c_str()),0);
     send(fd2,board.c_str(),strlen(board.c_str()),0);
+    // check if there is a winner
     if(checkWin(grids,user)) {
       message="";
       if(user==1) message=user1+" won!\n";
       else message=user2+" won!\n";
-
+      sleep(0.1);
       send(fd1,message.c_str(),strlen(message.c_str()),0);
       send(fd2,message.c_str(),strlen(message.c_str()),0);
       return;
@@ -229,37 +237,49 @@ void inGame(int fd1,int fd2) {
   }
   message="";
   message="End of Game with a Tie\n";
+  sleep(0.1);
   send(fd1,message.c_str(),strlen(message.c_str()),0);
   send(fd2,message.c_str(),strlen(message.c_str()),0);
   return;
 }
- 
+
+
+// challenge other users
 void challenge(int socketfd) {
   char buffer[MAX_BUFF_SIZE+1];
   int readMessage,pos;
   string username,message;
 
+  sleep(0.1);
+  // send invitation to the other user
   send(socketfd,"Who do you want to challenge: ",strlen("Who do you want to challenge: "),0);
   readMessage=read(socketfd,buffer,MAX_BUFF_SIZE);
   buffer[readMessage]='\0';
   username=buffer;
   pos=checkOnline(username);
   if(pos==-1) {
+    sleep(0.1);
     send(socketfd,"Unsuccessful\n",strlen("Unsuccessful\n"),0);
     return;
   }
   message=getUsername(socketfd)+" wants to challenge you [y/n]: ";
+  sleep(0.1);
   send(pos,message.c_str(),strlen(message.c_str()),0);
   bzero(buffer,sizeof(buffer));
   readMessage=read(pos,buffer,MAX_BUFF_SIZE);
   buffer[readMessage]='\0';
-  //printf("%s\n",buffer);
+  
+  //the other user reject the invitation 
   if(buffer[0]=='n') {
     message="";
     message=username+" rejected your invitation\n";
+    sleep(0.1);
     send(socketfd,message.c_str(),strlen(message.c_str()),0);
+    send(pos,"Rejection sent!\n",strlen("Rejection sent!\n"),0);
     return;
   }
+
+  //start playing game 
   inGame(socketfd,pos);
   return; 
 }
@@ -383,9 +403,11 @@ int main(int argc, char *argv[]) {
         // echo back the same message that came in
         else {
           buffer[readMessage] = '\0';
+          // list all the online users
           if(strncmp(buffer,"list",strlen("list"))==0) {
             list(socketfd);
           }
+          // challenge other user
           else if(strncmp(buffer,"challenge",strlen("challenge"))==0) {
             challenge(socketfd);
           }

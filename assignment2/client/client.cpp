@@ -5,21 +5,26 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <iostream>
+#include <time.h>
 #define MAX_LENGTH 8192
-#define PORT 8001
+#define PORT 8000
 using namespace std;
 
 
 void chat(int socketfd) {
     char buffer[MAX_LENGTH+1];
     int readMessage;
+    clock_t start;
+
     for(;;) {
         bzero(buffer,sizeof(buffer));
         scanf("%s",buffer);
         //printf("%s",buffer);
         if(buffer[0]==':') write(socketfd,buffer+1,strlen(buffer+1));
         bzero(buffer,sizeof(buffer));
+        start=clock();
         readMessage=read(socketfd,buffer,MAX_LENGTH);
+        if(readMessage==0) continue;
         buffer[readMessage]='\0';
         printf("%s",buffer);
     }
