@@ -20,6 +20,7 @@
 using namespace std;
 
 
+// structure of ip pairs
 struct ipPairs {
     string sourceIp;
     string destIp;
@@ -27,10 +28,12 @@ struct ipPairs {
 };
 
 
-CSVWriter csv;
-CSVWriter csv2;
-vector<struct ipPairs>ips;
+CSVWriter csv;  // for all packet information
+CSVWriter csv2; // for counter of ip
+vector<struct ipPairs>ips;  // counter of ip
 
+
+// get MAC address
 string printAddr(u_char *ptr){
     string mac;
     char hexString[20];
@@ -41,10 +44,10 @@ string printAddr(u_char *ptr){
             mac+=":";
         }
     }
-    //printf("\n");
     return mac;
 }
 
+// count IP pairs
 void ipCounter(string source, string dest) {
     for(int i=0;i<ips.size();i++) {
         if(source==ips[i].sourceIp && dest==ips[i].destIp){
@@ -60,6 +63,7 @@ void ipCounter(string source, string dest) {
     return;
 } 
 
+// packet parser
 void parsePacket(const unsigned char *packet, struct timeval ts, const struct pcap_pkthdr *pkthdr) {
 
     struct ip *ip;
@@ -75,23 +79,26 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
     struct udphdr *udpHeader;
     struct icmphdr *icmpHeader;
 
+    // get timestamp
     strftime(buff,20,"%Y-%m-%d %H:%M:%S", localtime(&ts.tv_sec));
     csv.newRow() << buff;
 
-    // if the packet is IP packet -> print out the source and destination ip
+    // get source and destination MAC address
     ethernetHeader=(struct ether_header *)packet;
     packet+=sizeof(struct ether_header);
     sourceMAC=printAddr(ethernetHeader->ether_shost);
     destMAC=printAddr(ethernetHeader->ether_dhost);
 
-
+    // if the packet is IP header
     if(ntohs(ethernetHeader->ether_type)==ETHERTYPE_IP) {
+
+        // get source and destination IP address
         ip=(struct ip *)packet; 
         inet_ntop(AF_INET,&(ip->ip_src),sourceIp,INET_ADDRSTRLEN);
         inet_ntop(AF_INET,&(ip->ip_dst),destIp,INET_ADDRSTRLEN);
-        ipCounter(sourceIp,destIp);
-        //cout << sourceIp << " " << destIp << " " << " ";
+        ipCounter(sourceIp,destIp); // count ip pairs
 
+        // parse tcp header
         if(ip->ip_p==IPPROTO_TCP) {
         tcpHeader=(tcphdr *)(packet+sizeof(struct ip));
         sourcePort = ntohs(tcpHeader->source);
@@ -100,6 +107,7 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
         csv<< sourceMAC << sourceIp << sourcePort << destMAC << destIp << destPort << "tcp";
         }
 
+        // parse udp header
         else if(ip->ip_p==IPPROTO_UDP) {
             udpHeader=(struct udphdr *)(packet+sizeof(struct ip));
             sourcePort=htons(udpHeader->uh_sport);
@@ -107,18 +115,24 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
             csv<< sourceMAC << sourceIp << sourcePort << destMAC << destIp << destPort << "udp";
         }
 
+        // parse icmp header
         else if(ip->ip_p==IPPROTO_ICMP) {
             csv<< sourceMAC << sourceIp << " " << destMAC << destIp << " " << "icmp";
         }
+
+        // parse igmp header
         else if(ip->ip_p==IPPROTO_IGMP){
             csv<< sourceMAC << sourceIp << " " << destMAC << destIp;
         }
     }
+
+    // not IP packet
     else {
         csv<< sourceMAC << " " << " " << destMAC;
 
     }
 
+    return;
 }
 
 
@@ -130,6 +144,7 @@ int main(int argc, char *argv[]) {
     const unsigned char *packet;
     struct pcap_pkthdr header;
 
+    // column name
     csv.newRow() << "Timestamp" << "Sender MAC" << "Sender IP" << "Sender Port" << "Target MAC" << "Target IP" << "Target Port" << "Transport Protocol";
 
     if(argc!=3) {
@@ -146,17 +161,21 @@ int main(int argc, char *argv[]) {
     cout << argv[2] << " is opened" << endl;
     
     int cnt=1;
+
+    // read packet one by one
     while(packet=pcap_next(pcap,&header)) {
         if(packet==NULL) break;
         parsePacket(packet,header.ts,&header);
         cout <<"packet No. " << cnt++ << endl; 
     }
-    csv.writeToFile("test.csv");
+    csv.writeToFile("packet_info.csv");
 
+    // ip counter
     csv2.newRow() << "Source IP" << "Target IP" << "Counter";
     for(int i=0;i<ips.size();i++) {
         csv2.newRow() << ips[i].sourceIp << ips[i].destIp << ips[i].counter;
     }
     csv2.writeToFile("counter.csv");
+
     return 0;
 }
