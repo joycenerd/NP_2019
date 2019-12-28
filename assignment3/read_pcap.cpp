@@ -14,18 +14,22 @@
 #include "include/CSVWriter.h"
 #include <netinet/ether.h>
 #include <string>
+#include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
+#include <vector>
 using namespace std;
 
-// UDP header struct
-struct UDP_hdr {
-    u_short uh_sport;   // source port
-    u_short uh_dport;   // destination port
-    u_short uh_ulen;    // datagram length
-    u_short uh_sum; // datagram checksum
+
+struct ipPairs {
+    string sourceIp;
+    string destIp;
+    int counter;
 };
 
-CSVWriter csv;
 
+CSVWriter csv;
+CSVWriter csv2;
+vector<struct ipPairs>ips;
 
 string printAddr(u_char *ptr){
     string mac;
@@ -41,6 +45,21 @@ string printAddr(u_char *ptr){
     return mac;
 }
 
+void ipCounter(string source, string dest) {
+    for(int i=0;i<ips.size();i++) {
+        if(source==ips[i].sourceIp && dest==ips[i].destIp){
+            ips[i].counter++;
+            return;
+        }
+    }
+    struct ipPairs tmp;
+    tmp.sourceIp=source;
+    tmp.destIp=dest;
+    tmp.counter=1;
+    ips.push_back(tmp);
+    return;
+} 
+
 void parsePacket(const unsigned char *packet, struct timeval ts, const struct pcap_pkthdr *pkthdr) {
 
     struct ip *ip;
@@ -53,6 +72,8 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
     time_t local_tv_sec;
     char buff[256];
     string sourceMAC,destMAC;
+    struct udphdr *udpHeader;
+    struct icmphdr *icmpHeader;
 
     strftime(buff,20,"%Y-%m-%d %H:%M:%S", localtime(&ts.tv_sec));
     csv.newRow() << buff;
@@ -68,7 +89,9 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
         ip=(struct ip *)packet; 
         inet_ntop(AF_INET,&(ip->ip_src),sourceIp,INET_ADDRSTRLEN);
         inet_ntop(AF_INET,&(ip->ip_dst),destIp,INET_ADDRSTRLEN);
+        ipCounter(sourceIp,destIp);
         //cout << sourceIp << " " << destIp << " " << " ";
+
         if(ip->ip_p==IPPROTO_TCP) {
         tcpHeader=(tcphdr *)(packet+sizeof(struct ip));
         sourcePort = ntohs(tcpHeader->source);
@@ -76,7 +99,26 @@ void parsePacket(const unsigned char *packet, struct timeval ts, const struct pc
         //cout << sourcePort << " " << destPort << endl;
         csv<< sourceMAC << sourceIp << sourcePort << destMAC << destIp << destPort << "tcp";
         }
+
+        else if(ip->ip_p==IPPROTO_UDP) {
+            udpHeader=(struct udphdr *)(packet+sizeof(struct ip));
+            sourcePort=htons(udpHeader->uh_sport);
+            destPort=htons(udpHeader->uh_dport);
+            csv<< sourceMAC << sourceIp << sourcePort << destMAC << destIp << destPort << "udp";
+        }
+
+        else if(ip->ip_p==IPPROTO_ICMP) {
+            csv<< sourceMAC << sourceIp << " " << destMAC << destIp << " " << "icmp";
+        }
+        else if(ip->ip_p==IPPROTO_IGMP){
+            csv<< sourceMAC << sourceIp << " " << destMAC << destIp;
+        }
     }
+    else {
+        csv<< sourceMAC << " " << " " << destMAC;
+
+    }
+
 }
 
 
@@ -110,5 +152,11 @@ int main(int argc, char *argv[]) {
         cout <<"packet No. " << cnt++ << endl; 
     }
     csv.writeToFile("test.csv");
+
+    csv2.newRow() << "Source IP" << "Target IP" << "Counter";
+    for(int i=0;i<ips.size();i++) {
+        csv2.newRow() << ips[i].sourceIp << ips[i].destIp << ips[i].counter;
+    }
+    csv2.writeToFile("counter.csv");
     return 0;
 }
